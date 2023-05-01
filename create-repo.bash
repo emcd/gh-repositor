@@ -2,7 +2,7 @@
 
 set -eu -o pipefail
 
-if [[ -z "$1" ]]; then
+if [[ -z "${1:-}" ]]; then
     echo 1>&2 'ERROR: Must supply project name.'
     exit 1
 fi
@@ -18,7 +18,7 @@ gha_gpg_signing_key_id="$(
 export GPG_SIGNING_KEY="$(
     gpg --armor --export-secret-subkeys "${gha_gpg_signing_key_id}")"
 
-local -r venv_name='repo-creator-venv'
+declare -r venv_name='repo-creator-venv'
 rm --force --recursive "${venv_name}"
 python3 -m venv "${venv_name}"
 source "${venv_name}/bin/activate"
