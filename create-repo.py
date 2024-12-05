@@ -69,14 +69,34 @@ response.raise_for_status()
 
 # Create GitHub Pages environment
 url = f"https://api.github.com/repos/{repo_owner}/{GH_PROJECT_NAME}/environments/github-pages"
-data = {"wait_timer": 0, "reviewers": [], "deployment_branch_policy": {"protected_branches": False, "custom_branch_policies": True}}
+data = {
+    "wait_timer": 0,
+    "reviewers": [],
+    "deployment_branch_policy": {
+        "protected_branches": False,
+        "custom_branch_policies": True,
+    }
+}
 response = requests.put(url, json=data, headers=headers)
 response.raise_for_status()
 
-# Set the deployment branch policy for the master branch
-url = f"https://api.github.com/repos/{repo_owner}/{GH_PROJECT_NAME}/environments/github-pages/deployment-branch-policies"
-data = {"name": "master"}
+# Configure GitHub Pages to use GitHub Actions as source
+url = f"https://api.github.com/repos/{repo_owner}/{GH_PROJECT_NAME}/pages"
+data = {
+    "source": {
+        "branch": "master",  # Required but not actually used
+        "path": "/",         # Required but not actually used
+    },
+    "build_type": "workflow"
+}
 response = requests.post(url, json=data, headers=headers)
 response.raise_for_status()
+
+# Set the deployment branch policy for the master branch and release tags
+url = f"https://api.github.com/repos/{repo_owner}/{GH_PROJECT_NAME}/environments/github-pages/deployment-branch-policies"
+data = {"name": "master"}
+for data in ( {"name": "master"}, {"name": "v*"} ):
+    response = requests.post(url, json=data, headers=headers)
+    response.raise_for_status()
 
 print("Successfully configured the repository.")
