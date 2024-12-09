@@ -93,9 +93,12 @@ response = requests.post(url, json=data, headers=headers)
 response.raise_for_status()
 
 # Set the deployment branch policy for the master branch and release tags
+# https://docs.github.com/en/rest/deployments/branch-policies?apiVersion=2022-11-28#create-a-deployment-branch-policy
 url = f"https://api.github.com/repos/{repo_owner}/{GH_PROJECT_NAME}/environments/github-pages/deployment-branch-policies"
-data = {"name": "master"}
-for data in ( {"name": "master"}, {"name": "v*"} ):
+for data in (
+    {"name": "master", "type": "branch"},
+    {"name": "v[0-9]*", "type": "tag"},
+):
     response = requests.post(url, json=data, headers=headers)
     response.raise_for_status()
 
