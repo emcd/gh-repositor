@@ -23,6 +23,6 @@ rm --force --recursive "${venv_name}"
 python3 -m venv "${venv_name}"
 source "${venv_name}/bin/activate"
 python3 -m pip install --upgrade pip
-python3 -m pip install pynacl requests
+python3 -m pip install pynacl python-dotenv requests
 
 python3 create-repo.py
