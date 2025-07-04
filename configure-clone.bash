@@ -74,6 +74,20 @@ create_symlinks() {
 # Execute symlink creation
 create_symlinks
 
+# Install Git LFS from repo root
+(
+    cd "$repo_root"
+    git lfs install
+)
+
+# Check if repo contains pyproject.toml and run pre-commit install
+if [ -f "$repo_root/pyproject.toml" ]; then
+    (
+        cd "$repo_root"
+        hatch --env develop run pre-commit install --config .auxiliary/configuration/pre-commit.yaml
+    )
+fi
+
 # my_gpg_signing_key_id="$(
 #     gpg --list-secret-keys --keyid-format=long \
 #     | grep --after-context 1 --extended-regexp '^uid.*Eric McDonald \(Github\)' \
