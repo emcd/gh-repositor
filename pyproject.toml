@@ -1,0 +1,316 @@
+# vim: set filetype=toml fileencoding=utf-8:
+# -*- mode: toml ; coding: utf-8 -*-
+
+[build-system]
+requires = [
+  'hatchling',
+]
+build-backend = 'hatchling.build'
+
+[project]
+name = 'gh-repositor'
+description = 'Github Repository Management'
+dynamic = [ 'version' ]
+license = 'Apache-2.0'
+readme = { 'file' = 'README.rst', 'content-type' = 'text/x-rst' }
+requires-python = '>= 3.10'
+dependencies = [
+  'typing-extensions',
+  # --- BEGIN: Injected by Copier ---
+  'tyro',
+  # --- END: Injected by Copier ---
+]
+classifiers = [ # https://pypi.org/classifiers
+  'Development Status :: 3 - Alpha',
+  #'Intended Audience :: Developers',
+  'License :: OSI Approved :: Apache Software License',
+  'Programming Language :: Python :: 3 :: Only',
+  # --- BEGIN: Injected by Copier ---
+  'Programming Language :: Python :: 3.10',
+  'Programming Language :: Python :: 3.11',
+  'Programming Language :: Python :: 3.12',
+  'Programming Language :: Python :: 3.13',
+  'Programming Language :: Python :: Implementation :: CPython',
+  'Programming Language :: Python :: Implementation :: PyPy',
+  # --- END: Injected by Copier ---
+  #'Topic :: Software Development',
+  # TODO: Add classifiers as appropriate.
+]
+keywords = [ ] # TODO: Add keywords.
+[[project.authors]]
+name = 'Eric McDonald'
+email = 'emcd@users.noreply.github.com'
+[project.scripts]
+ghrepositor = 'ghrepositor:main'
+[project.urls]
+'Homepage' = 'https://github.com/emcd/gh-repositor'
+'Source Code' = 'https://github.com/emcd/gh-repositor'
+'Issue Tracker' = 'https://github.com/emcd/gh-repositor/issues'
+
+[tool.SELF]
+year-of-origin = 2023
+
+# https://coverage.readthedocs.io/en/latest/config.html
+[tool.coverage.paths]
+gha-runners = [
+  '/home/runner/work/gh-repositor/gh-repositor/',
+  '/Users/runner/work/gh-repositor/gh-repositor/',
+  'C:\a\gh-repositor\gh-repositor\',
+  'D:\a\gh-repositor\gh-repositor\',
+]
+[tool.coverage.run]
+branch = true
+command_line = '-m pytest' # TODO? '--fail-under'
+data_file = '.auxiliary/caches/pytest/coverage.sqlite3'
+parallel = true
+source = [ 'sources' ]
+[tool.coverage.html]
+directory = '.auxiliary/artifacts/coverage-pytest'
+[tool.coverage.xml]
+output = '.auxiliary/artifacts/coverage-pytest/coverage.xml'
+
+# https://hatch.pypa.io/latest/config/metadata/
+[tool.hatch.build]
+directory = '.auxiliary/artifacts/hatch-build'
+[tool.hatch.build.targets.sdist]
+only-include = [
+  'sources/ghrepositor',
+  # --- BEGIN: Injected by Copier ---
+  # --- END: Injected by Copier ---
+]
+strict-naming = false
+[tool.hatch.build.targets.wheel]
+only-include = [
+  'sources/ghrepositor',
+  # --- BEGIN: Injected by Copier ---
+  # --- END: Injected by Copier ---
+]
+strict-naming = false
+[tool.hatch.build.targets.wheel.sources]
+'sources/ghrepositor' = 'ghrepositor'
+# --- BEGIN: Injected by Copier ---
+# --- END: Injected by Copier --- 
+[tool.hatch.envs.default]
+python = '3.10'
+[tool.hatch.envs.develop]
+description = ''' Development environment. '''
+dependencies = [
+  'Jinja2',
+  'coverage[toml]',
+  'furo',
+  'packaging',
+  'pre-commit',
+  'pyright',
+  'pytest',
+  'ruff',
+  'sphinx',
+  'sphinx-copybutton',
+  'sphinx-inline-tabs',
+  'towncrier',
+  # --- BEGIN: Injected by Copier ---
+  # --- END: Injected by Copier ---
+]
+post-install-commands = [
+  # --- BEGIN: Injected by Copier ---
+  # --- END: Injected by Copier ---
+]
+[tool.hatch.envs.develop.env-vars]
+PYTHONUNBUFFERED = 'TRUE' # TODO: Only for coverage/pytest.
+# --- BEGIN: Injected by Copier ---
+# --- END: Injected by Copier ---
+[tool.hatch.envs.develop.scripts]
+docsgen = [
+  """sphinx-build -E -b linkcheck -d .auxiliary/caches/sphinx \
+     documentation .auxiliary/artifacts/sphinx-linkcheck""",
+  """sphinx-build -a -d .auxiliary/caches/sphinx \
+     documentation .auxiliary/artifacts/sphinx-html""",
+]
+linters = [
+  """ruff check --quiet sources documentation tests""",
+  # --- BEGIN: Injected by Copier ---
+  # --- END: Injected by Copier ---
+  """pyright sources""",
+]
+packagers = [
+  """hatch build""",
+  # --- BEGIN: Injected by Copier ---
+  # --- END: Injected by Copier ---
+]
+testers-no-reports = [
+  'coverage erase',
+  'coverage run',
+  """coverage run -m sphinx.cmd.build \
+     -E -b doctest -d .auxiliary/caches/sphinx \
+     documentation .auxiliary/artifacts/sphinx-doctest""",
+]
+testers = [
+  'testers-no-reports',
+  'coverage combine',
+  'coverage report --skip-covered',
+  'coverage html',
+  'coverage xml',
+]
+make-all = [
+  'linters',
+  'testers',
+  'packagers',
+  'docsgen',
+]
+[tool.hatch.envs.qa]
+description = ''' Quality assurance environment. '''
+template = 'develop'
+[[tool.hatch.envs.qa.matrix]]
+python = [
+    '3.10',
+    '3.11',
+    '3.12',
+    '3.13',
+    'pypy3.10',
+]
+[tool.hatch.version]
+path = 'sources/ghrepositor/__init__.py'
+
+# https://mypy.readthedocs.io/en/stable/config_file.html
+[tool.mypy]
+# Note: Due to repeated painful experiences with Mypy, we use Pyright instead.
+#       Pyright properly handles TypeVars, etc...
+cache_dir = '.auxiliary/caches/mypy'
+exclude = [ '.*' ]  # Ignore everything
+ignore_errors = true
+follow_imports = 'skip'
+pretty = true
+strict = false
+
+# https://microsoft.github.io/pyright/#/configuration
+[tool.pyright]
+ignore = [ 'documentation', 'tests' ] # Stronger hint for language server.
+include = [ 'sources' ]
+reportConstantRedefinition = true
+reportInvalidTypeVarUse = true
+reportMatchNotExhaustive = true
+reportMissingImports = true
+reportMissingTypeStubs = true
+reportMissingTypeArgument = true
+reportPossiblyUnboundVariable = false # Covered by other linters.
+reportPrivateImportUsage = false      # Covered by other linters.
+reportPrivateUsage = false            # Covered by other linters.
+reportSelfClsParameterName = false    # Too opinionated.
+reportUnknownArgumentType = true
+reportUnknownLambdaType = true
+reportUnknownMemberType = true
+reportUnknownParameterType = true
+reportUnknownVariableType = true
+reportUnnecessaryCast = true
+reportUnnecessaryComparison = true
+reportUntypedBaseClass = true
+reportUntypedClassDecorator = true
+reportUntypedFunctionDecorator = true
+reportUntypedNamedTuple = true
+reportUnusedExpression = true
+reportUnusedImport = false            # Covered by other linters.
+reportUnusedVariable = false          # Covered by other linters.
+#strict = [ 'sources' ]
+stubPath = 'sources/ghrepositor/_typedecls'
+
+[tool.pytest.ini_options]
+# Note: Cannot run doctests from Pytest, because Pytest tries to update '_'
+#       attribute on protected modules. Instead, we use Sphinx to run doctests.
+minversion = '8.1'
+addopts = '--capture=no --exitfirst -rfE'
+testpaths = [ 'tests' ]
+python_files = [ 'test_*.py' ]
+python_functions = [ 'test_[0-9][0-9][0-9]_*' ]
+cache_dir = '.auxiliary/caches/pytest'
+
+[tool.ruff]
+#builtins = [ 'ic' ]
+cache-dir = '.auxiliary/caches/ruff'
+indent-width = 4
+line-length = 79
+[tool.ruff.lint]
+dummy-variable-rgx = '^_$'
+ignore = [
+  'E701',     # multiple-statements-on-one-line-colon
+  'PLC0415',  # import-outside-top-level
+  'SIM300',   # yoda-condition: scarred by assignment expressions, I am
+]
+select = [ # default: E4, E7, E9, F
+  'A',        # Flake8 builtins rules
+  'B006',     # mutable-argument-default
+  'B008',     # function-call-in-default-argument
+  'B011',     # assert-false
+  'B023',     # function-uses-loop-variable
+  'B904',     # raise-without-from-inside-except
+  'B909',     # PREVIEW: loop-iterator-mutation
+  'C90',      # McCabe complexity rules
+  'E101',     # mixed-spaces-and-tabs
+  'E111',     # PREVIEW: indentation-with-invalid-multiple
+  'E112',     # PREVIEW: no-indented-block
+  'E4',       # Pycodestyle import rules
+  'E501',     # line-too-long
+  'E7',       # Pycodestyle general rules
+  'E9',       # Pycodestyle runtime errors
+  'F',        # Pyflakes rules
+  'PERF',     # Perflint rules
+  'PLC',      # Pylint convention rules
+  'PLE',      # Pylint error rules
+  'PLR',      # Pylint refactor rules
+  'PLW',      # Pylint warning rules
+  'RET',      # Flake8 return rules
+  'RUF',      # Ruff rules
+  'S',        # Flake8 Bandit rules
+  'SIM',      # Flake8 simplify rules
+  'SLF',      # Flake8 self rules
+  'TRY',      # Tryceratops rules
+]
+[tool.ruff.lint.mccabe]
+max-complexity = 12
+[tool.ruff.lint.per-file-ignores]
+'__init__.py' = [
+  'F401',     # unused-import
+  'F403',     # undefined-local-with-import-star
+  'F405',     # undefined-local-with-import-star-usage
+]
+'tests/**/*.py' = [
+  'PLR0124',  # comparison-with-itself
+  'PLR0913',  # too-many-arguments
+  'PLR0915',  # too-many-statements
+  'PLR1704',  # redefined-argument-from-local
+  'PLR2004',  # magic-value-comparison
+  'PLW0129',  # assert-on-string-literal
+  'PLW0603',  # global-statement
+  'PLW0642',  # self-assignment
+  'S101',     # assert
+  'SLF001',   # private-member-accessed
+  'TRY',      # Tryceratops rules
+]
+[tool.ruff.lint.pylint]
+max-locals = 10
+max-public-methods = 10
+max-statements = 30
+
+[tool.towncrier]
+directory = '.auxiliary/data/towncrier'
+filename = 'documentation/changelog.rst'
+package = 'ghrepositor'
+package_dir = 'sources'
+[[tool.towncrier.type]]
+# features and other improvements
+directory = 'enhance'
+name = 'Enhancements'
+showcontent = true
+[[tool.towncrier.type]]
+# deprecations and other notices
+directory = 'notify'
+name = 'Notices'
+showcontent = true
+[[tool.towncrier.type]]
+# removals of feature or platform support
+directory = 'remove'
+name = 'Removals'
+showcontent = true
+[[tool.towncrier.type]]
+# bug fixes
+directory = 'repair'
+name = 'Repairs'
+showcontent = true

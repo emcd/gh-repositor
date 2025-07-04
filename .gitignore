@@ -1,10 +1,12 @@
+.env
 .claude
 .gemini
-.env
 .mcp.json
 .*.swp
 AGENTS.md
 CLAUDE.md
 CONVENTIONS.md
 GEMINI.md
+__pycache__/
+bugs/
 repo-creator-venv/
