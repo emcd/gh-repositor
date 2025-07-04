@@ -19,6 +19,9 @@ dependencies = [
   # --- BEGIN: Injected by Copier ---
   'tyro',
   # --- END: Injected by Copier ---
+  'pynacl',
+  'python-dotenv',
+  'requests',
 ]
 classifiers = [ # https://pypi.org/classifiers
   'Development Status :: 3 - Alpha',

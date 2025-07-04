@@ -30,3 +30,6 @@ import typing_extensions as typx
 # --- BEGIN: Injected by Copier ---
 import tyro
 # --- END: Injected by Copier ---
+import requests
+import nacl
+from dotenv import load_dotenv

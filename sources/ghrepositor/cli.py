@@ -37,5 +37,24 @@ def execute( ) -> None:
         raise SystemExit( 1 ) from None
 
 
-async def _main( ) -> None:
-    print( "Hello from ghrepositor CLI!" )
+async def _main( 
+    project_name: str,
+    private: bool = False
+) -> None:
+    ''' Create and configure a new GitHub repository.
+    
+    Args:
+        project_name: Name of the repository to create
+        private: Whether to create a private repository (default: False)
+    '''
+    from .repository import create_repository
+    
+    try:
+        repo_info = create_repository( project_name, private )
+        print(
+            f"Successfully created and configured repository: "
+            f"{repo_info['html_url']}"
+        )
+    except Exception as exc:
+        print( f"Error creating repository: {exc}" )
+        raise
