@@ -9,4 +9,5 @@ CONVENTIONS.md
 GEMINI.md
 __pycache__/
 bugs/
+build/
 repo-creator-venv/
