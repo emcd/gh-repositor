@@ -91,7 +91,7 @@ create_symlinks() {
 download_instructions() {
     local instructions_dir="$repo_root/.auxiliary/instructions"
     local base_url="https://raw.githubusercontent.com/emcd/python-project-common/refs/tags/docs-1/documentation/common"
-    local files=("practices.rst" "style.rst" "nomenclature.rst" "nomenclature-germanic.rst" "tests.rst")
+    local files=("architecture.rst" "nomenclature.rst" "nomenclature-germanic.rst" "practices.rst" "requirements.rst" "style.rst" "tests.rst")
 
     # Create instructions directory if it doesn't exist
     mkdir -p "$instructions_dir"
