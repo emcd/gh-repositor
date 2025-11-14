@@ -40,6 +40,8 @@
       "Bash(echo *)",
       "Bash(file *)",
       "Bash(find *)",
+      "Bash(gh --version)",
+      "Bash(gh *)",
       "Bash(gh browse *)",
       "Bash(gh issue list *)",
       "Bash(gh issue view *)",
