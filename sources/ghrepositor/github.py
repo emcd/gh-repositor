@@ -1,0 +1,276 @@
+# vim: set filetype=python fileencoding=utf-8:
+# -*- coding: utf-8 -*-
+
+#============================================================================#
+#                                                                            #
+#  Licensed under the Apache License, Version 2.0 (the "License");           #
+#  you may not use this file except in compliance with the License.          #
+#  You may obtain a copy of the License at                                   #
+#                                                                            #
+#      http://www.apache.org/licenses/LICENSE-2.0                            #
+#                                                                            #
+#  Unless required by applicable law or agreed to in writing, software       #
+#  distributed under the License is distributed on an "AS IS" BASIS,         #
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  #
+#  See the License for the specific language governing permissions and       #
+#  limitations under the License.                                            #
+#                                                                            #
+#============================================================================#
+
+
+''' GitHub API client for repository management. '''
+
+
+from . import __
+
+from .exceptions import Omnierror
+
+
+RepositoryData: __.typx.TypeAlias = __.cabc.Mapping[ str, __.typx.Any ]
+SecretsPublicKey: __.typx.TypeAlias = __.cabc.Mapping[ str, str ]
+
+
+class GitHubAPIError( Omnierror, RuntimeError ):
+    ''' GitHub API request failure. '''
+
+
+class RepositoryCreationError( GitHubAPIError ):
+    ''' Repository creation failure. '''
+
+
+class SecretConfigurationError( GitHubAPIError ):
+    ''' Secret configuration failure. '''
+
+
+class BranchProtectionError( GitHubAPIError ):
+    ''' Branch protection configuration failure. '''
+
+
+class PagesConfigurationError( GitHubAPIError ):
+    ''' GitHub Pages configuration failure. '''
+
+
+def encrypt_secret( public_key: str, secret_value: str ) -> str:
+    ''' Encrypts secret value using repository public key. '''
+    try:
+        decoded_key = __.nacl_public.PublicKey(
+            public_key.encode( 'utf-8' ),
+            __.nacl_encoding.Base64Encoder )  # pyright: ignore
+    except Exception as exception:
+        raise SecretConfigurationError(  # noqa: TRY003
+            f"Invalid public key format: {public_key[:20]}..."
+        ) from exception
+    sealed_box = __.nacl_public.SealedBox( decoded_key )
+    try:
+        encrypted = sealed_box.encrypt( secret_value.encode( 'utf-8' ) )
+    except Exception as exception:
+        raise SecretConfigurationError(  # noqa: TRY003
+            "Cannot encrypt secret value."
+        ) from exception
+    return __.b64_encode( encrypted ).decode( 'utf-8' )
+
+
+async def create_repository(
+    client: __.httpx.AsyncClient,
+    repository_name: str,
+    *,
+    is_private: bool = False,
+) -> RepositoryData:
+    ''' Creates GitHub repository via API. '''
+    url = 'https://api.github.com/user/repos'
+    data: dict[ str, __.typx.Any ] = {
+        'name': repository_name, 'private': is_private }
+    try:
+        response = await client.post( url, json = data )
+        response.raise_for_status( )
+    except __.httpx.HTTPStatusError as exception:
+        raise RepositoryCreationError(  # noqa: TRY003
+            f"Cannot create repository '{repository_name}': "
+            f"{exception.response.status_code} - {exception.response.text}"
+        ) from exception
+    except Exception as exception:
+        raise RepositoryCreationError(  # noqa: TRY003
+            f"Cannot create repository '{repository_name}'."
+        ) from exception
+    return __.immut.Dictionary( response.json( ) )
+
+
+async def get_repository_public_key(
+    client: __.httpx.AsyncClient,
+    repository_owner: str,
+    repository_name: str,
+) -> SecretsPublicKey:
+    ''' Retrieves repository public key for secrets encryption. '''
+    url = (
+        f"https://api.github.com/repos/{repository_owner}/"
+        f"{repository_name}/actions/secrets/public-key" )
+    try:
+        response = await client.get( url )
+        response.raise_for_status( )
+    except __.httpx.HTTPStatusError as exception:
+        raise SecretConfigurationError(  # noqa: TRY003
+            f"Cannot retrieve public key for {repository_owner}/"
+            f"{repository_name}: {exception.response.status_code}"
+        ) from exception
+    except Exception as exception:
+        raise SecretConfigurationError(  # noqa: TRY003
+            f"Cannot retrieve public key for {repository_owner}/"
+            f"{repository_name}."
+        ) from exception
+    return __.immut.Dictionary( response.json( ) )
+
+
+async def add_repository_secret(  # noqa: PLR0913
+    client: __.httpx.AsyncClient,
+    repository_owner: str,
+    repository_name: str,
+    secret_name: str,
+    secret_value: str,
+    public_key_info: SecretsPublicKey,
+) -> None:
+    ''' Adds encrypted secret to repository. '''
+    try:
+        encrypted_value = encrypt_secret(
+            public_key_info[ 'key' ], secret_value )
+    except KeyError as exception:
+        raise SecretConfigurationError(  # noqa: TRY003
+            "Public key information missing 'key' field."
+        ) from exception
+    try:
+        key_id = public_key_info[ 'key_id' ]
+    except KeyError as exception:
+        raise SecretConfigurationError(  # noqa: TRY003
+            "Public key information missing 'key_id' field."
+        ) from exception
+    url = (
+        f"https://api.github.com/repos/{repository_owner}/"
+        f"{repository_name}/actions/secrets/{secret_name}" )
+    data = { 'encrypted_value': encrypted_value, 'key_id': key_id }
+    try:
+        response = await client.put( url, json = data )
+        response.raise_for_status( )
+    except __.httpx.HTTPStatusError as exception:
+        raise SecretConfigurationError(  # noqa: TRY003
+            f"Cannot add secret '{secret_name}': "
+            f"{exception.response.status_code}"
+        ) from exception
+    except Exception as exception:
+        raise SecretConfigurationError(  # noqa: TRY003
+            f"Cannot add secret '{secret_name}'."
+        ) from exception
+
+
+async def configure_branch_protection(
+    client: __.httpx.AsyncClient,
+    repository_id: str,
+    branch_pattern: str,
+) -> None:
+    ''' Configures branch protection rule via GraphQL API. '''
+    query = f'''
+mutation {{
+  createBranchProtectionRule(input: {{
+    repositoryId: "{repository_id}",
+    pattern: "{branch_pattern}",
+    requiresCommitSignatures: true
+  }}) {{
+    clientMutationId
+  }}
+}}
+'''
+    url = 'https://api.github.com/graphql'
+    data = { 'query': query }
+    try:
+        response = await client.post( url, json = data )
+        response.raise_for_status( )
+    except __.httpx.HTTPStatusError as exception:
+        raise BranchProtectionError(  # noqa: TRY003
+            f"Cannot configure branch protection for '{branch_pattern}': "
+            f"{exception.response.status_code}"
+        ) from exception
+    except Exception as exception:
+        raise BranchProtectionError(  # noqa: TRY003
+            f"Cannot configure branch protection for '{branch_pattern}'."
+        ) from exception
+
+
+async def configure_github_pages(
+    client: __.httpx.AsyncClient,
+    repository_owner: str,
+    repository_name: str,
+) -> None:
+    ''' Configures GitHub Pages for repository. '''
+    # Create GitHub Pages environment
+    env_url = (
+        f"https://api.github.com/repos/{repository_owner}/"
+        f"{repository_name}/environments/github-pages" )
+    env_data: dict[ str, __.typx.Any ] = {
+        'wait_timer': 0,
+        'reviewers': [ ],
+        'deployment_branch_policy': {
+            'protected_branches': False,
+            'custom_branch_policies': True,
+        }
+    }
+    try:
+        response = await client.put( env_url, json = env_data )
+        response.raise_for_status( )
+    except __.httpx.HTTPStatusError as exception:
+        raise PagesConfigurationError(  # noqa: TRY003
+            f"Cannot create GitHub Pages environment: "
+            f"{exception.response.status_code}"
+        ) from exception
+    except Exception as exception:
+        raise PagesConfigurationError(  # noqa: TRY003
+            "Cannot create GitHub Pages environment."
+        ) from exception
+    # Configure GitHub Pages build type
+    pages_url = (
+        f"https://api.github.com/repos/{repository_owner}/"
+        f"{repository_name}/pages" )
+    pages_data: dict[ str, __.typx.Any ] = {
+        'source': {
+            'branch': 'master',
+            'path': '/',
+        },
+        'build_type': 'workflow'
+    }
+    try:
+        response = await client.post( pages_url, json = pages_data )
+        response.raise_for_status( )
+    except __.httpx.HTTPStatusError as exception:
+        raise PagesConfigurationError(  # noqa: TRY003
+            f"Cannot configure GitHub Pages build type: "
+            f"{exception.response.status_code}"
+        ) from exception
+    except Exception as exception:
+        raise PagesConfigurationError(  # noqa: TRY003
+            "Cannot configure GitHub Pages build type."
+        ) from exception
+
+
+async def configure_deployment_policies(
+    client: __.httpx.AsyncClient,
+    repository_owner: str,
+    repository_name: str,
+    policies: __.cabc.Sequence[
+        __.cabc.Mapping[ str, str ]
+    ],
+) -> None:
+    ''' Configures deployment branch policies for GitHub Pages. '''
+    url = (
+        f"https://api.github.com/repos/{repository_owner}/"
+        f"{repository_name}/environments/github-pages/"
+        "deployment-branch-policies" )
+    for policy in policies:
+        try:
+            response = await client.post( url, json = policy )
+            response.raise_for_status( )
+        except __.httpx.HTTPStatusError as exception:  # noqa: PERF203
+            raise PagesConfigurationError(  # noqa: TRY003
+                f"Cannot configure deployment policy {policy}: "
+                f"{exception.response.status_code}"
+            ) from exception
+        except Exception as exception:
+            raise PagesConfigurationError(  # noqa: TRY003
+                f"Cannot configure deployment policy {policy}."
+            ) from exception
