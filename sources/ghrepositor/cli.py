@@ -23,13 +23,8 @@
 
 from . import __
 
+from . import exceptions as _exceptions
 from . import github as _github
-
-from .exceptions import Omnierror
-
-
-class EnvironmentConfigurationError( Omnierror, RuntimeError ):
-    ''' Environment configuration error. '''
 
 
 def execute( ) -> None:
@@ -51,20 +46,20 @@ def _get_environment_variables( ) -> tuple[ str, str, str ]:
     try:
         github_token = __.os.environ[ 'GITHUB_TOKEN' ]
     except KeyError as exception:
-        raise EnvironmentConfigurationError(  # noqa: TRY003
-            "GITHUB_TOKEN environment variable not set."
+        raise _exceptions.EnvironmentConfigurationAbsence(
+            'GITHUB_TOKEN'
         ) from exception
     try:
         gpg_signing_key = __.os.environ[ 'GPG_SIGNING_KEY' ]
     except KeyError as exception:
-        raise EnvironmentConfigurationError(  # noqa: TRY003
-            "GPG_SIGNING_KEY environment variable not set."
+        raise _exceptions.EnvironmentConfigurationAbsence(
+            'GPG_SIGNING_KEY'
         ) from exception
     try:
         anthropic_api_key = __.os.environ[ 'ANTHROPIC_API_KEY' ]
     except KeyError as exception:
-        raise EnvironmentConfigurationError(  # noqa: TRY003
-            "ANTHROPIC_API_KEY environment variable not set."
+        raise _exceptions.EnvironmentConfigurationAbsence(
+            'ANTHROPIC_API_KEY'
         ) from exception
     return github_token, gpg_signing_key, anthropic_api_key
 
@@ -134,7 +129,7 @@ async def _main( repository_name: str ) -> None:
     try:
         github_token, gpg_signing_key, anthropic_api_key = (
             _get_environment_variables( ) )
-    except EnvironmentConfigurationError as exception:
+    except _exceptions.EnvironmentConfigurationAbsence as exception:
         raise SystemExit( f"ERROR: {exception}" ) from exception  # noqa: TRY003
 
     headers = {
@@ -150,8 +145,9 @@ async def _main( repository_name: str ) -> None:
             repository_owner = repository_info[ 'owner' ][ 'login' ]
             repository_id = repository_info[ 'node_id' ]
         except KeyError as exception:
-            message = "Repository response missing expected fields."
-            raise _github.RepositoryCreationError( message ) from exception
+            raise _exceptions.RepositoryCreationFailure(
+                repository_name
+            ) from exception
         await _configure_repository_secrets(
             client,
             repository_owner,

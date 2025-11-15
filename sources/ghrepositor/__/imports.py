@@ -23,12 +23,11 @@
 # ruff: noqa: F401
 
 
+import base64
 import collections.abc as   cabc
 import os
 import pathlib
 import types
-
-from base64 import          b64encode as b64_encode
 
 import httpx
 
