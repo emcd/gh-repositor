@@ -33,14 +33,14 @@ SecretsPublicKey: __.typx.TypeAlias = __.cabc.Mapping[ str, str ]
 def encrypt_secret( public_key: str, secret_value: str ) -> str:
     ''' Encrypts secret value using repository public key. '''
     try:
-        decoded_key = __.nacl_public.PublicKey(
+        decoded_key = __.nacl_public.PublicKey(  # pyright: ignore
             public_key.encode( 'utf-8' ),
             __.nacl_encoding.Base64Encoder )  # pyright: ignore
     except Exception as exception:
         raise _exceptions.PublicKeyDecodingFailure(
             public_key[ :20 ]
         ) from exception
-    sealed_box = __.nacl_public.SealedBox( decoded_key )
+    sealed_box = __.nacl_public.SealedBox( decoded_key )  # pyright: ignore
     try:
         encrypted = sealed_box.encrypt( secret_value.encode( 'utf-8' ) )
     except Exception as exception:
@@ -64,8 +64,8 @@ async def create_repository(
     except __.httpx.HTTPStatusError as exception:
         raise _exceptions.RepositoryCreationFailure(
             repository_name,
-            exception.response.status_code,
-            exception.response.text
+            status_code = exception.response.status_code,
+            response_text = exception.response.text
         ) from exception
     except Exception as exception:
         raise _exceptions.RepositoryCreationFailure(
@@ -90,7 +90,7 @@ async def get_repository_public_key(
         raise _exceptions.PublicKeyRetrievalFailure(
             repository_owner,
             repository_name,
-            exception.response.status_code
+            status_code = exception.response.status_code
         ) from exception
     except Exception as exception:
         raise _exceptions.PublicKeyRetrievalFailure(
@@ -132,7 +132,7 @@ async def add_repository_secret(  # noqa: PLR0913
     except __.httpx.HTTPStatusError as exception:
         raise _exceptions.SecretAdditionFailure(
             secret_name,
-            exception.response.status_code
+            status_code = exception.response.status_code
         ) from exception
     except Exception as exception:
         raise _exceptions.SecretAdditionFailure(
@@ -165,7 +165,7 @@ mutation {{
     except __.httpx.HTTPStatusError as exception:
         raise _exceptions.BranchProtectionFailure(
             branch_pattern,
-            exception.response.status_code
+            status_code = exception.response.status_code
         ) from exception
     except Exception as exception:
         raise _exceptions.BranchProtectionFailure(
@@ -196,7 +196,7 @@ async def configure_github_pages(
         response.raise_for_status( )
     except __.httpx.HTTPStatusError as exception:
         raise _exceptions.PagesEnvironmentCreationFailure(
-            exception.response.status_code
+            status_code = exception.response.status_code
         ) from exception
     except Exception as exception:
         raise _exceptions.PagesEnvironmentCreationFailure( ) from exception
@@ -216,7 +216,7 @@ async def configure_github_pages(
         response.raise_for_status( )
     except __.httpx.HTTPStatusError as exception:
         raise _exceptions.PagesBuildConfigurationFailure(
-            exception.response.status_code
+            status_code = exception.response.status_code
         ) from exception
     except Exception as exception:
         raise _exceptions.PagesBuildConfigurationFailure( ) from exception
@@ -242,7 +242,7 @@ async def configure_deployment_policies(
         except __.httpx.HTTPStatusError as exception:  # noqa: PERF203
             raise _exceptions.DeploymentPolicyConfigurationFailure(
                 policy,
-                exception.response.status_code
+                status_code = exception.response.status_code
             ) from exception
         except Exception as exception:
             raise _exceptions.DeploymentPolicyConfigurationFailure(

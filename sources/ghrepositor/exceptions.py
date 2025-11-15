@@ -50,15 +50,15 @@ class RepositoryCreationFailure( GitHubAPIFailure ):
     def __init__(
         self,
         repository_name: str,
-        status_code: __.typx.Optional[ int ] = None,
-        response_text: __.typx.Optional[ str ] = None,
+        status_code: __.Absential[ int ] = __.absent,
+        response_text: __.Absential[ str ] = __.absent,
     ) -> None:
-        if status_code and response_text:
-            message = (
-                f"Cannot create repository '{repository_name}': "
-                f"{status_code} - {response_text}" )
-        else:
-            message = f"Cannot create repository '{repository_name}'."
+        message = f"Cannot create repository '{repository_name}'."
+        if (
+            not __.is_absent( status_code )
+            and not __.is_absent( response_text )
+        ):
+            message = f"{message[ :-1 ]}: {status_code} - {response_text}"
         super( ).__init__( message )
 
 
@@ -69,16 +69,13 @@ class PublicKeyRetrievalFailure( GitHubAPIFailure ):
         self,
         repository_owner: str,
         repository_name: str,
-        status_code: __.typx.Optional[ int ] = None,
+        status_code: __.Absential[ int ] = __.absent,
     ) -> None:
-        if status_code:
-            message = (
-                f"Cannot retrieve public key for {repository_owner}/"
-                f"{repository_name}: {status_code}" )
-        else:
-            message = (
-                f"Cannot retrieve public key for {repository_owner}/"
-                f"{repository_name}." )
+        message = (
+            f"Cannot retrieve public key for {repository_owner}/"
+            f"{repository_name}." )
+        if not __.is_absent( status_code ):
+            message = f"{message[ :-1 ]}: {status_code}"
         super( ).__init__( message )
 
 
@@ -88,12 +85,11 @@ class SecretAdditionFailure( GitHubAPIFailure ):
     def __init__(
         self,
         secret_name: str,
-        status_code: __.typx.Optional[ int ] = None,
+        status_code: __.Absential[ int ] = __.absent,
     ) -> None:
-        if status_code:
-            message = f"Cannot add secret '{secret_name}': {status_code}"
-        else:
-            message = f"Cannot add secret '{secret_name}'."
+        message = f"Cannot add secret '{secret_name}'."
+        if not __.is_absent( status_code ):
+            message = f"{message[ :-1 ]}: {status_code}"
         super( ).__init__( message )
 
 
@@ -126,39 +122,31 @@ class BranchProtectionFailure( GitHubAPIFailure ):
     def __init__(
         self,
         branch_pattern: str,
-        status_code: __.typx.Optional[ int ] = None,
+        status_code: __.Absential[ int ] = __.absent,
     ) -> None:
-        if status_code:
-            message = (
-                f"Cannot configure branch protection for '{branch_pattern}': "
-                f"{status_code}" )
-        else:
-            message = (
-                f"Cannot configure branch protection for '{branch_pattern}'." )
+        message = f"Cannot configure branch protection for '{branch_pattern}'."
+        if not __.is_absent( status_code ):
+            message = f"{message[ :-1 ]}: {status_code}"
         super( ).__init__( message )
 
 
 class PagesEnvironmentCreationFailure( GitHubAPIFailure ):
     ''' GitHub Pages environment creation failure. '''
 
-    def __init__( self, status_code: __.typx.Optional[ int ] = None ) -> None:
-        if status_code:
-            message = (
-                f"Cannot create GitHub Pages environment: {status_code}" )
-        else:
-            message = "Cannot create GitHub Pages environment."
+    def __init__( self, status_code: __.Absential[ int ] = __.absent ) -> None:
+        message = "Cannot create GitHub Pages environment."
+        if not __.is_absent( status_code ):
+            message = f"{message[ :-1 ]}: {status_code}"
         super( ).__init__( message )
 
 
 class PagesBuildConfigurationFailure( GitHubAPIFailure ):
     ''' GitHub Pages build configuration failure. '''
 
-    def __init__( self, status_code: __.typx.Optional[ int ] = None ) -> None:
-        if status_code:
-            message = (
-                f"Cannot configure GitHub Pages build type: {status_code}" )
-        else:
-            message = "Cannot configure GitHub Pages build type."
+    def __init__( self, status_code: __.Absential[ int ] = __.absent ) -> None:
+        message = "Cannot configure GitHub Pages build type."
+        if not __.is_absent( status_code ):
+            message = f"{message[ :-1 ]}: {status_code}"
         super( ).__init__( message )
 
 
@@ -168,12 +156,9 @@ class DeploymentPolicyConfigurationFailure( GitHubAPIFailure ):
     def __init__(
         self,
         policy: __.cabc.Mapping[ str, str ],
-        status_code: __.typx.Optional[ int ] = None,
+        status_code: __.Absential[ int ] = __.absent,
     ) -> None:
-        if status_code:
-            message = (
-                f"Cannot configure deployment policy {policy}: "
-                f"{status_code}" )
-        else:
-            message = f"Cannot configure deployment policy {policy}."
+        message = f"Cannot configure deployment policy {policy}."
+        if not __.is_absent( status_code ):
+            message = f"{message[ :-1 ]}: {status_code}"
         super( ).__init__( message )
