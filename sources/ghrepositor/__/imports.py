@@ -36,13 +36,13 @@ import types
 import warnings
 
 import httpx
-
-from nacl import            encoding as nacl_encoding
-from nacl import            public as nacl_public
+import                      nacl
 
 import typing_extensions as typx
-# --- BEGIN: Injected by Copier ---
+
 import appcore.cli as       appcore_cli
+import                      dotenv
+# --- BEGIN: Injected by Copier ---
 import dynadoc as           ddoc
 import frigid as            immut
 import tyro

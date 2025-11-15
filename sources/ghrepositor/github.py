@@ -33,16 +33,16 @@ SecretsPublicKey: __.typx.TypeAlias = __.cabc.Mapping[ str, str ]
 def encrypt_secret( public_key: str, secret_value: str ) -> str:
     ''' Encrypts secret value using repository public key. '''
     try:
-        decoded_key = __.nacl_public.PublicKey(  # pyright: ignore
+        decoded_key = __.nacl.public.PublicKey(
             public_key.encode( 'utf-8' ),
-            __.nacl_encoding.Base64Encoder )  # pyright: ignore
+            __.nacl.encoding.Base64Encoder )
     except Exception as exception:
         raise _exceptions.PublicKeyDecodingFailure(
             public_key[ :20 ]
         ) from exception
-    sealed_box = __.nacl_public.SealedBox( decoded_key )  # pyright: ignore
+    sealed_box = __.nacl.public.SealedBox( decoded_key )
     try:
-        encrypted = sealed_box.encrypt( secret_value.encode( 'utf-8' ) )
+        encrypted: bytes = sealed_box.encrypt( secret_value.encode( 'utf-8' ) )
     except Exception as exception:
         raise _exceptions.SecretValueEncryptionFailure( ) from exception
     return __.base64.b64encode( encrypted ).decode( 'utf-8' )

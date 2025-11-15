@@ -77,10 +77,8 @@ def intercept_errors( ) -> __.cabc.Callable[
 
 def _retrieve_github_token( ) -> __.Absential[ str ]:
     ''' Retrieves GitHub token from environment or gh CLI. '''
-    # Try environment variable first
     token = __.os.environ.get( 'GITHUB_TOKEN' )
     if token: return token
-    # Fallback to gh auth token
     try:
         result = __.subprocess.run(
             [ 'gh', 'auth', 'token' ],
@@ -88,28 +86,34 @@ def _retrieve_github_token( ) -> __.Absential[ str ]:
             text = True,
             check = True,
             timeout = 5 )
+    except (
+        FileNotFoundError,
+        __.subprocess.CalledProcessError,
+        __.subprocess.TimeoutExpired,
+    ):
+        return __.absent
+    else:
         token = result.stdout.strip( )
         if token: return token
-    except ( FileNotFoundError, __.subprocess.CalledProcessError, __.subprocess.TimeoutExpired ):  # noqa: E501
-        pass
     return __.absent
 
 
-def _retrieve_gpg_signing_key( ) -> __.Absential[ str ]:
-    ''' Retrieves GPG signing key from environment or GPG keyring. '''
-    # Try environment variable first
-    key = __.os.environ.get( 'GPG_SIGNING_KEY' )
-    if key: return key
-    # Fallback to parsing GPG keyring for GitHub Actions Robot key
+def _parse_gpg_keyring( ) -> __.Absential[ str ]:
+    ''' Extracts GitHub Actions Robot GPG signing key from keyring. '''
     try:
-        # List secret keys with fingerprints
         list_result = __.subprocess.run(
             [ 'gpg', '--list-secret-keys', '--with-subkey-fingerprints' ],
             capture_output = True,
             text = True,
             check = True,
             timeout = 5 )
-        # Find key ID for GitHub Actions Robot
+    except (
+        FileNotFoundError,
+        __.subprocess.CalledProcessError,
+        __.subprocess.TimeoutExpired,
+    ):
+        return __.absent
+    else:
         lines = list_result.stdout.split( '\n' )
         key_id = None
         found_github_actions = False
@@ -117,46 +121,46 @@ def _retrieve_gpg_signing_key( ) -> __.Absential[ str ]:
             if 'Github Actions Robot' in line:
                 found_github_actions = True
             elif found_github_actions and line.strip( ):
-                # Get the fingerprint from the line after uid
                 parts = line.strip( ).split( )
                 if parts:
                     key_id = parts[ 0 ]
                     break
         if not key_id: return __.absent
-        # Export the key
+    try:
         export_result = __.subprocess.run(
             [ 'gpg', '--armor', '--export-secret-subkeys', key_id ],
             capture_output = True,
             text = True,
             check = True,
             timeout = 5 )
+    except (
+        FileNotFoundError,
+        __.subprocess.CalledProcessError,
+        __.subprocess.TimeoutExpired,
+    ):
+        return __.absent
+    else:
         exported_key = export_result.stdout.strip( )
         if exported_key: return exported_key
-    except ( FileNotFoundError, __.subprocess.CalledProcessError, __.subprocess.TimeoutExpired ):  # noqa: E501
-        pass
     return __.absent
+
+
+def _retrieve_gpg_signing_key( ) -> __.Absential[ str ]:
+    ''' Retrieves GPG signing key from environment or GPG keyring. '''
+    key = __.os.environ.get( 'GPG_SIGNING_KEY' )
+    if key: return key
+    return _parse_gpg_keyring( )
 
 
 def _retrieve_anthropic_api_key( ) -> __.Absential[ str ]:
     ''' Retrieves Anthropic API key from environment or .env file. '''
-    # Try environment variable first
     key = __.os.environ.get( 'ANTHROPIC_API_KEY' )
     if key: return key
-    # Fallback to .env file
     env_path = __.pathlib.Path( '.env' )
     if env_path.exists( ):
-        try:
-            with env_path.open( ) as f:
-                for raw_line in f:
-                    line = raw_line.strip( )
-                    if line.startswith( 'ANTHROPIC_API_KEY=' ):
-                        key = line.split( '=', 1 )[ 1 ].strip( )
-                        # Remove quotes if present
-                        if key.startswith( ( '"', "'" ) ) and key[ 0 ] == key[ -1 ]:  # noqa: E501
-                            key = key[ 1:-1 ]
-                        if key: return key
-        except ( OSError, UnicodeDecodeError ):
-            pass
+        values = __.dotenv.dotenv_values( env_path )
+        key = values.get( 'ANTHROPIC_API_KEY' )
+        if key: return key
     return __.absent
 
 
@@ -170,7 +174,8 @@ def _retrieve_credentials( ) -> tuple[ str, str, str ]:
         raise _exceptions.EnvironmentConfigurationAbsence( 'GPG_SIGNING_KEY' )
     anthropic_api_key = _retrieve_anthropic_api_key( )
     if __.is_absent( anthropic_api_key ):
-        raise _exceptions.EnvironmentConfigurationAbsence( 'ANTHROPIC_API_KEY' )  # noqa: E501
+        raise _exceptions.EnvironmentConfigurationAbsence(
+            'ANTHROPIC_API_KEY' )
     return github_token, gpg_signing_key, anthropic_api_key
 
 
@@ -182,10 +187,10 @@ async def _configure_repository_secrets(
     anthropic_api_key: str,
 ) -> None:
     ''' Configures repository secrets. '''
-    print( "Retrieving repository public key..." )
+    _scribe.info( "Retrieving repository public key..." )
     public_key_info = await _github.get_repository_public_key(
         client, repository_owner, repository_name )
-    print( "Adding repository secrets..." )
+    _scribe.info( "Adding repository secrets..." )
     secrets = __.immut.Dictionary( {
         'GHA_COMMIT_SIGNING_KEY': gpg_signing_key,
         'ANTHROPIC_API_KEY': anthropic_api_key,
@@ -205,7 +210,7 @@ async def _configure_branch_protections(
     repository_id: str,
 ) -> None:
     ''' Configures branch protection rules. '''
-    print( "Configuring branch protection rules..." )
+    _scribe.info( "Configuring branch protection rules..." )
     branch_patterns = ( 'master', 'release-*' )
     for pattern in branch_patterns:
         await _github.configure_branch_protection(
@@ -218,10 +223,10 @@ async def _configure_pages_and_deployments(
     repository_name: str,
 ) -> None:
     ''' Configures GitHub Pages and deployment policies. '''
-    print( "Configuring GitHub Pages..." )
+    _scribe.info( "Configuring GitHub Pages..." )
     await _github.configure_github_pages(
         client, repository_owner, repository_name )
-    print( "Configuring deployment branch policies..." )
+    _scribe.info( "Configuring deployment branch policies..." )
     deployment_policies = (
         { 'name': 'master', 'type': 'branch' },
         { 'name': 'v[0-9]*', 'type': 'tag' },
@@ -230,7 +235,9 @@ async def _configure_pages_and_deployments(
         client, repository_owner, repository_name, deployment_policies )
 
 
-class Cli( __.appcore_cli.Application, decorators = ( __.standard_tyro_class, ) ):  # noqa: E501
+class Cli(
+    __.appcore_cli.Application, decorators = ( __.standard_tyro_class, )
+):
     ''' GitHub repository creation and configuration CLI. '''
 
     repository_name: __.typx.Annotated[
@@ -239,7 +246,9 @@ class Cli( __.appcore_cli.Application, decorators = ( __.standard_tyro_class, ) 
     ]
 
     @intercept_errors( )
-    async def execute( self, auxdata: __.Globals ) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+    async def execute(
+        self, auxdata: __.Globals
+    ) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         ''' Creates and configures GitHub repository. '''
         github_token, gpg_signing_key, anthropic_api_key = (
             _retrieve_credentials( ) )
@@ -250,7 +259,7 @@ class Cli( __.appcore_cli.Application, decorators = ( __.standard_tyro_class, ) 
         }
 
         async with __.httpx.AsyncClient( headers = headers ) as client:
-            print( f"Creating repository: {self.repository_name}" )
+            _scribe.info( f"Creating repository: {self.repository_name}" )
             repository_info = await _github.create_repository(
                 client, self.repository_name, is_private = False )
             try:
@@ -270,10 +279,12 @@ class Cli( __.appcore_cli.Application, decorators = ( __.standard_tyro_class, ) 
                 client, repository_id )
             await _configure_pages_and_deployments(
                 client, repository_owner, self.repository_name )
-            print( f"\nSuccessfully configured repository: {self.repository_name}" )  # noqa: E501
-            print(
-                f"Repository URL: https://github.com/{repository_owner}/"
-                f"{self.repository_name}" )
+            _scribe.info(
+                "Successfully configured repository: %s",
+                self.repository_name )
+            _scribe.info(
+                "Repository URL: https://github.com/%s/%s",
+                repository_owner, self.repository_name )
 
 
 def execute( ) -> None:
@@ -282,14 +293,8 @@ def execute( ) -> None:
         __.tyro.conf.EnumChoicesFromValues,
         __.tyro.conf.HelptextFromCommentsOff,
     )
-    with __.warnings.catch_warnings( ):
-        __.warnings.filterwarnings(
-            'ignore',
-            message = r'Mutable type .* is used as a default value.*',
-            category = UserWarning,
-            module = 'tyro.constructors._struct_spec_dataclass' )
-        try: __.asyncio.run( __.tyro.cli( Cli, config = config )( ) )
-        except SystemExit: raise
-        except BaseException as exc:
-            _scribe.error( "%s: %s", type( exc ).__name__, exc )
-            raise SystemExit( 1 ) from None
+    try: __.asyncio.run( __.tyro.cli( Cli, config = config )( ) )
+    except SystemExit: raise
+    except BaseException as exc:
+        _scribe.error( "%s: %s", type( exc ).__name__, exc )
+        raise SystemExit( 1 ) from None

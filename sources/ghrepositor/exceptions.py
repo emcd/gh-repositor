@@ -53,12 +53,13 @@ class RepositoryCreationFailure( GitHubAPIFailure ):
         status_code: __.Absential[ int ] = __.absent,
         response_text: __.Absential[ str ] = __.absent,
     ) -> None:
-        message = f"Cannot create repository '{repository_name}'."
+        message = f"Cannot create repository '{repository_name}'"
         if (
             not __.is_absent( status_code )
             and not __.is_absent( response_text )
         ):
-            message = f"{message[ :-1 ]}: {status_code} - {response_text}"
+            message = f"{message}: {status_code} - {response_text}"
+        message = f"{message}."
         super( ).__init__( message )
 
 
@@ -73,9 +74,10 @@ class PublicKeyRetrievalFailure( GitHubAPIFailure ):
     ) -> None:
         message = (
             f"Cannot retrieve public key for {repository_owner}/"
-            f"{repository_name}." )
+            f"{repository_name}" )
         if not __.is_absent( status_code ):
-            message = f"{message[ :-1 ]}: {status_code}"
+            message = f"{message}: {status_code}"
+        message = f"{message}."
         super( ).__init__( message )
 
 
@@ -87,9 +89,10 @@ class SecretAdditionFailure( GitHubAPIFailure ):
         secret_name: str,
         status_code: __.Absential[ int ] = __.absent,
     ) -> None:
-        message = f"Cannot add secret '{secret_name}'."
+        message = f"Cannot add secret '{secret_name}'"
         if not __.is_absent( status_code ):
-            message = f"{message[ :-1 ]}: {status_code}"
+            message = f"{message}: {status_code}"
+        message = f"{message}."
         super( ).__init__( message )
 
 
@@ -124,9 +127,10 @@ class BranchProtectionFailure( GitHubAPIFailure ):
         branch_pattern: str,
         status_code: __.Absential[ int ] = __.absent,
     ) -> None:
-        message = f"Cannot configure branch protection for '{branch_pattern}'."
+        message = f"Cannot configure branch protection for '{branch_pattern}'"
         if not __.is_absent( status_code ):
-            message = f"{message[ :-1 ]}: {status_code}"
+            message = f"{message}: {status_code}"
+        message = f"{message}."
         super( ).__init__( message )
 
 
@@ -134,9 +138,10 @@ class PagesEnvironmentCreationFailure( GitHubAPIFailure ):
     ''' GitHub Pages environment creation failure. '''
 
     def __init__( self, status_code: __.Absential[ int ] = __.absent ) -> None:
-        message = "Cannot create GitHub Pages environment."
+        message = "Cannot create GitHub Pages environment"
         if not __.is_absent( status_code ):
-            message = f"{message[ :-1 ]}: {status_code}"
+            message = f"{message}: {status_code}"
+        message = f"{message}."
         super( ).__init__( message )
 
 
@@ -144,9 +149,10 @@ class PagesBuildConfigurationFailure( GitHubAPIFailure ):
     ''' GitHub Pages build configuration failure. '''
 
     def __init__( self, status_code: __.Absential[ int ] = __.absent ) -> None:
-        message = "Cannot configure GitHub Pages build type."
+        message = "Cannot configure GitHub Pages build type"
         if not __.is_absent( status_code ):
-            message = f"{message[ :-1 ]}: {status_code}"
+            message = f"{message}: {status_code}"
+        message = f"{message}."
         super( ).__init__( message )
 
 
@@ -158,7 +164,8 @@ class DeploymentPolicyConfigurationFailure( GitHubAPIFailure ):
         policy: __.cabc.Mapping[ str, str ],
         status_code: __.Absential[ int ] = __.absent,
     ) -> None:
-        message = f"Cannot configure deployment policy {policy}."
+        message = f"Cannot configure deployment policy {policy}"
         if not __.is_absent( status_code ):
-            message = f"{message[ :-1 ]}: {status_code}"
+            message = f"{message}: {status_code}"
+        message = f"{message}."
         super( ).__init__( message )
