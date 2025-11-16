@@ -61,7 +61,7 @@ def intercept_errors( ) -> __.cabc.Callable[
             except _exceptions.Omnierror as exc:
                 match auxdata.display.format:
                     case _interfaces.DisplayFormat.JSON:
-                        error_data = exc.render_as_json( )
+                        error_data = dict( exc.render_as_json( ) )
                         error_message = __.json.dumps( error_data, indent = 2 )
                         print( error_message, file = stream )
                     case _interfaces.DisplayFormat.Markdown:
@@ -241,15 +241,27 @@ async def _configure_pages_and_deployments(
         client, repository_owner, repository_name, deployment_policies )
 
 
-class Cli(
-    __.appcore_cli.Application, decorators = ( __.standard_tyro_class, )
-):
+class Cli( __.appcore_cli.Application ):
     ''' GitHub repository creation and configuration CLI. '''
+
+    display: _state.DisplayOptions = __.dcls.field(
+        default_factory = _state.DisplayOptions )
 
     repository_name: __.typx.Annotated[
         __.tyro.conf.Positional[ str ],
         __.tyro.conf.arg( help = "Name for new repository" ),
     ]
+
+    async def prepare(
+        self, exits: __.ctxl.AsyncExitStack
+    ) -> _state.Globals:
+        ''' Prepares package-specific global state. '''
+        auxdata_base = await super( ).prepare( exits )
+        nomargs = {
+            field.name: getattr( auxdata_base, field.name )
+            for field in __.dcls.fields( auxdata_base )
+            if not field.name.startswith( '_' ) }
+        return _state.Globals( display = self.display, **nomargs )
 
     @intercept_errors( )
     async def execute(  # pyright: ignore[reportIncompatibleMethodOverride]
