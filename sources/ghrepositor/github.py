@@ -35,7 +35,7 @@ def encrypt_secret( public_key: str, secret_value: str ) -> str:
     try:
         decoded_key = __.nacl.public.PublicKey(
             public_key.encode( 'utf-8' ),
-            __.nacl.encoding.Base64Encoder( ) )
+            __.nacl.encoding.Base64Encoder )
     except Exception as exception:
         raise _exceptions.PublicKeyDecodingFailure(
             public_key[ :20 ]
