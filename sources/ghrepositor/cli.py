@@ -56,16 +56,17 @@ def intercept_errors( ) -> __.cabc.Callable[
             *posargs: __.typx.Any,
             **nomargs: __.typx.Any,
         ) -> None:
+            stream = await auxdata.display.provide_stream( auxdata.exits )
             try: return await function( self, auxdata, *posargs, **nomargs )
             except _exceptions.Omnierror as exc:
                 match auxdata.display.format:
                     case _interfaces.DisplayFormat.JSON:
                         error_data = exc.render_as_json( )
                         error_message = __.json.dumps( error_data, indent = 2 )
-                        print( error_message )
+                        print( error_message, file = stream )
                     case _interfaces.DisplayFormat.Markdown:
                         error_lines = exc.render_as_markdown( )
-                        print( '\n'.join( error_lines ) )
+                        print( '\n'.join( error_lines ), file = stream )
                 raise SystemExit( 1 ) from None
             except Exception as exc:
                 _scribe.error( f"{function.__name__} failed: %s", exc )
@@ -73,7 +74,7 @@ def intercept_errors( ) -> __.cabc.Callable[
                     "type": "unexpected_error",
                     "message": str( exc ),
                 }, indent = 2 )
-                print( error_message )
+                print( error_message, file = stream )
                 raise SystemExit( 1 ) from None
 
         return wrapper
