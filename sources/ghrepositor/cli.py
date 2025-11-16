@@ -127,13 +127,17 @@ def _parse_gpg_keyring( ) -> __.Absential[ str ]:
         lines = list_result.stdout.split( '\n' )
         key_id = None
         found_github_actions = False
+        skip_next = False
         for line in lines:
             if 'Github Actions Robot' in line:
                 found_github_actions = True
-            elif found_github_actions and line.strip( ):
-                parts = line.strip( ).split( )
-                if parts:
-                    key_id = parts[ 0 ]
+                skip_next = True  # Skip the "ssb" line
+            elif found_github_actions:
+                if skip_next and line.strip( ).startswith( 'ssb' ):
+                    skip_next = False  # Next line will have the fingerprint
+                elif not skip_next and line.strip( ):
+                    # This should be the fingerprint line
+                    key_id = line.strip( )
                     break
         if not key_id: return __.absent
     try:
