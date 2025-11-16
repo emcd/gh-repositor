@@ -18,44 +18,14 @@
 #============================================================================#
 
 
-''' Common imports used throughout the package. '''
-
-# ruff: noqa: F401
+''' Interfaces and enumerations for package. '''
 
 
-import                      asyncio
-import                      base64
-import collections.abc as   cabc
-import contextlib as        ctxl
-import dataclasses as       dcls
-import                      enum
-import functools as         funct
-import                      json
-import                      os
-import                      pathlib
-import                      subprocess
-import                      types
-import                      warnings
+from . import __
 
-import                      httpx
-import                      nacl.encoding
-import                      nacl.public
 
-import typing_extensions as typx
+class DisplayFormat( __.enum.Enum ):
+    ''' Enumeration for CLI display formats. '''
 
-import appcore.cli as       appcore_cli
-import appcore.state as     appcore_state
-import                      dotenv
-# --- BEGIN: Injected by Copier ---
-import dynadoc as           ddoc
-import frigid as            immut
-import tyro
-# --- END: Injected by Copier ---
-
-from logging import getLogger as acquire_scribe
-
-# --- BEGIN: Injected by Copier ---
-from absence import Absential, absent, is_absent
-# --- END: Injected by Copier ---
-
-standard_tyro_class = tyro.conf.configure( tyro.conf.OmitArgPrefixes )
+    JSON = 'json'
+    Markdown = 'markdown'

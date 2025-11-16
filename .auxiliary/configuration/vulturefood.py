@@ -6,3 +6,4 @@ package_name            # unused variable
 # --- BEGIN: Injected by Copier ---
 Omnierror              # unused base exception class for derivation
 # --- END: Injected by Copier ---
+render_as_markdown     # part of exception rendering API
