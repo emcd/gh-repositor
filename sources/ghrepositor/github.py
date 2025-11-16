@@ -173,13 +173,12 @@ mutation {{
         ) from exception
 
 
-async def configure_github_pages(
+async def _create_pages_environment(
     client: __.httpx.AsyncClient,
     repository_owner: str,
     repository_name: str,
 ) -> None:
-    ''' Configures GitHub Pages for repository. '''
-    # Create GitHub Pages environment
+    ''' Creates GitHub Pages environment for repository. '''
     env_url = (
         f"https://api.github.com/repos/{repository_owner}/"
         f"{repository_name}/environments/github-pages" )
@@ -200,7 +199,14 @@ async def configure_github_pages(
         ) from exception
     except Exception as exception:
         raise _exceptions.PagesEnvironmentCreationFailure( ) from exception
-    # Configure GitHub Pages build type
+
+
+async def _configure_pages_build_type(
+    client: __.httpx.AsyncClient,
+    repository_owner: str,
+    repository_name: str,
+) -> None:
+    ''' Configures GitHub Pages build type for repository. '''
     pages_url = (
         f"https://api.github.com/repos/{repository_owner}/"
         f"{repository_name}/pages" )
@@ -220,6 +226,18 @@ async def configure_github_pages(
         ) from exception
     except Exception as exception:
         raise _exceptions.PagesBuildConfigurationFailure( ) from exception
+
+
+async def configure_github_pages(
+    client: __.httpx.AsyncClient,
+    repository_owner: str,
+    repository_name: str,
+) -> None:
+    ''' Configures GitHub Pages for repository. '''
+    await _create_pages_environment(
+        client, repository_owner, repository_name )
+    await _configure_pages_build_type(
+        client, repository_owner, repository_name )
 
 
 async def configure_deployment_policies(

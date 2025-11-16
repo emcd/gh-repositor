@@ -31,6 +31,24 @@ class Omniexception( __.immut.exceptions.Omniexception ):
 class Omnierror( Omniexception, Exception ):
     ''' Base for error exceptions raised by package API. '''
 
+    def render_as_json( self ) -> __.immut.Dictionary[ str, __.typx.Any ]:
+        ''' Renders exception as JSON-compatible dictionary. '''
+        return __.immut.Dictionary[
+            str, __.typx.Any
+        ](
+            type = type( self ).__name__,
+            message = str( self ),
+        )
+
+    def render_as_markdown(
+        self, /, *,
+        reveal_internals: bool = True,
+    ) -> tuple[ str, ... ]:
+        ''' Renders exception as Markdown lines for display. '''
+        lines = [ f"## Error: {type( self ).__name__}" ]
+        lines.append( f"**Message:** {self}" )
+        return tuple( lines )
+
 
 class EnvironmentConfigurationAbsence( Omnierror, RuntimeError ):
     ''' Environment configuration variable absence. '''

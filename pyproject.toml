@@ -222,7 +222,6 @@ strict = false
 ignore = [ '.auxiliary', 'documentation', 'tests' ] # Ignore diagnostics.
 include = [ 'sources', 'tests' ]      # Consider for operations.
 reportConstantRedefinition = true
-reportIncompatibleMethodOverride = false  # Disabled due to appcore framework issue
 reportInvalidTypeVarUse = true
 reportMatchNotExhaustive = true
 reportMissingImports = true

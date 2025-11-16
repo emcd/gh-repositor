@@ -56,10 +56,8 @@ def intercept_errors( ) -> __.cabc.Callable[
         ) -> None:
             try: return await function( self, auxdata, *posargs, **nomargs )
             except _exceptions.Omnierror as exc:
-                error_message = __.json.dumps( {
-                    "type": type( exc ).__name__,
-                    "message": str( exc ),
-                }, indent = 2 )
+                error_data = exc.render_as_json( )
+                error_message = __.json.dumps( error_data, indent = 2 )
                 print( error_message )
                 raise SystemExit( 1 ) from None
             except Exception as exc:
@@ -98,15 +96,19 @@ def _retrieve_github_token( ) -> __.Absential[ str ]:
     return __.absent
 
 
+_run_command = __.funct.partial(
+    __.subprocess.run,
+    capture_output = True,
+    text = True,
+    check = True,
+    timeout = 5 )
+
+
 def _parse_gpg_keyring( ) -> __.Absential[ str ]:
     ''' Extracts GitHub Actions Robot GPG signing key from keyring. '''
     try:
-        list_result = __.subprocess.run(
-            [ 'gpg', '--list-secret-keys', '--with-subkey-fingerprints' ],
-            capture_output = True,
-            text = True,
-            check = True,
-            timeout = 5 )
+        list_result = _run_command(
+            [ 'gpg', '--list-secret-keys', '--with-subkey-fingerprints' ] )
     except (
         FileNotFoundError,
         __.subprocess.CalledProcessError,
@@ -127,12 +129,8 @@ def _parse_gpg_keyring( ) -> __.Absential[ str ]:
                     break
         if not key_id: return __.absent
     try:
-        export_result = __.subprocess.run(
-            [ 'gpg', '--armor', '--export-secret-subkeys', key_id ],
-            capture_output = True,
-            text = True,
-            check = True,
-            timeout = 5 )
+        export_result = _run_command(
+            [ 'gpg', '--armor', '--export-secret-subkeys', key_id ] )
     except (
         FileNotFoundError,
         __.subprocess.CalledProcessError,
@@ -246,18 +244,16 @@ class Cli(
     ]
 
     @intercept_errors( )
-    async def execute(
+    async def execute(  # pyright: ignore[reportIncompatibleMethodOverride]
         self, auxdata: __.Globals
-    ) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+    ) -> None:
         ''' Creates and configures GitHub repository. '''
         github_token, gpg_signing_key, anthropic_api_key = (
             _retrieve_credentials( ) )
-
         headers = {
             'Authorization': f"token {github_token}",
             'Accept': 'application/vnd.github+json',
         }
-
         async with __.httpx.AsyncClient( headers = headers ) as client:
             _scribe.info( f"Creating repository: {self.repository_name}" )
             repository_info = await _github.create_repository(
