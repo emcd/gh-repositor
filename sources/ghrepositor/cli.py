@@ -25,6 +25,8 @@ from . import __
 
 from . import exceptions as _exceptions
 from . import github as _github
+from . import interfaces as _interfaces
+from . import state as _state
 
 
 _scribe = __.acquire_scribe( __name__ )
@@ -50,15 +52,20 @@ def intercept_errors( ) -> __.cabc.Callable[
         @__.funct.wraps( function )
         async def wrapper(
             self: __.typx.Any,
-            auxdata: __.Globals,
+            auxdata: _state.Globals,
             *posargs: __.typx.Any,
             **nomargs: __.typx.Any,
         ) -> None:
             try: return await function( self, auxdata, *posargs, **nomargs )
             except _exceptions.Omnierror as exc:
-                error_data = exc.render_as_json( )
-                error_message = __.json.dumps( error_data, indent = 2 )
-                print( error_message )
+                match auxdata.display.format:
+                    case _interfaces.DisplayFormat.JSON:
+                        error_data = exc.render_as_json( )
+                        error_message = __.json.dumps( error_data, indent = 2 )
+                        print( error_message )
+                    case _interfaces.DisplayFormat.Markdown:
+                        error_lines = exc.render_as_markdown( )
+                        print( '\n'.join( error_lines ) )
                 raise SystemExit( 1 ) from None
             except Exception as exc:
                 _scribe.error( f"{function.__name__} failed: %s", exc )
@@ -245,7 +252,7 @@ class Cli(
 
     @intercept_errors( )
     async def execute(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self, auxdata: __.Globals
+        self, auxdata: _state.Globals
     ) -> None:
         ''' Creates and configures GitHub repository. '''
         github_token, gpg_signing_key, anthropic_api_key = (

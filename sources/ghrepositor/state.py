@@ -18,43 +18,23 @@
 #============================================================================#
 
 
-''' Common imports used throughout the package. '''
-
-# ruff: noqa: F401
+''' Application state management. '''
 
 
-import                      asyncio
-import                      base64
-import collections.abc as   cabc
-import contextlib as        ctxl
-import dataclasses as       dcls
-import                      enum
-import functools as         funct
-import                      json
-import                      os
-import                      pathlib
-import                      subprocess
-import                      types
-import                      warnings
+from . import __
+from . import interfaces as _interfaces
 
-import                      httpx
-import                      nacl
 
-import typing_extensions as typx
+class DisplayOptions( __.appcore_cli.DisplayOptions ):
+    ''' Consolidated display configuration for CLI output. '''
 
-import appcore.cli as       appcore_cli
-import appcore.state as     appcore_state
-import                      dotenv
-# --- BEGIN: Injected by Copier ---
-import dynadoc as           ddoc
-import frigid as            immut
-import tyro
-# --- END: Injected by Copier ---
+    format: _interfaces.DisplayFormat = _interfaces.DisplayFormat.JSON
 
-from logging import getLogger as acquire_scribe
 
-# --- BEGIN: Injected by Copier ---
-from absence import Absential, absent, is_absent
-# --- END: Injected by Copier ---
+class Globals( __.appcore_state.Globals ):
+    ''' Package-specific global state container.
 
-standard_tyro_class = tyro.conf.configure( tyro.conf.OmitArgPrefixes )
+        Extends appcore.Globals with display options for output formatting.
+    '''
+
+    display: DisplayOptions = __.dcls.field( default_factory = DisplayOptions )

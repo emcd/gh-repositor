@@ -40,10 +40,7 @@ class Omnierror( Omniexception, Exception ):
             message = str( self ),
         )
 
-    def render_as_markdown(
-        self, /, *,
-        reveal_internals: bool = True,
-    ) -> tuple[ str, ... ]:
+    def render_as_markdown( self ) -> tuple[ str, ... ]:
         ''' Renders exception as Markdown lines for display. '''
         lines = [ f"## Error: {type( self ).__name__}" ]
         lines.append( f"**Message:** {self}" )
