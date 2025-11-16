@@ -38,7 +38,8 @@ import                      types
 import                      warnings
 
 import                      httpx
-import                      nacl
+import                      nacl.encoding
+import                      nacl.public
 
 import typing_extensions as typx
 
