@@ -49,7 +49,7 @@ import                      dotenv
 # --- BEGIN: Injected by Copier ---
 import dynadoc as           ddoc
 import frigid as            immut
-import tyro
+import                      tyro
 # --- END: Injected by Copier ---
 
 from logging import getLogger as acquire_scribe
