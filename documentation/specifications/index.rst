@@ -27,4 +27,4 @@ Each specification documents requirements using scenario-based format (WHEN/THEN
    :maxdepth: 2
    :glob:
 
-   ../architecture/openspec/specs/*/spec
+.. ../architecture/openspec/specs/*/spec
