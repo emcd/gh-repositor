@@ -96,7 +96,7 @@ strict-naming = false
 [tool.hatch.build.targets.wheel.sources]
 'sources/ghrepositor' = 'ghrepositor'
 # --- BEGIN: Injected by Copier ---
-# --- END: Injected by Copier --- 
+# --- END: Injected by Copier ---
 [tool.hatch.envs.default]
 python = '3.10'
 [tool.hatch.envs.develop]
@@ -358,7 +358,13 @@ showcontent = true
 
 [tool.vibelinter]
 context = 3
-exclude_paths = [ '.auxiliary/**', '.venv/**', 'tests/**',  ]
+exclude_paths = [
+  '.auxiliary/**',
+  '.venv/**',
+  'tests/**',
+  'create-repo.py',
+  'repo-creator-venv/**',
+]
 
 [tool.vulture]
 paths = [ '.auxiliary/configuration/vulturefood.py', 'sources' ]
