@@ -18,7 +18,6 @@ inject_foundations: true
 package_name: ghrepositor
 project_name: gh-repositor
 pypy_versions:
-- '3.10'
 - '3.11'
 python_version_min: '3.10'
 python_versions:

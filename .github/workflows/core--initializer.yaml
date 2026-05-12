@@ -65,8 +65,6 @@ jobs:
             hatch: "py3.13"
           "3.14":
             hatch: "py3.14"
-          "pypy3.10":
-            hatch: "pypy3.10"
           "pypy3.11":
             hatch: "pypy3.11"
           EOF
@@ -83,7 +81,6 @@ jobs:
           # PyPy has slow I/O, even slower on Windows.
           items="$(jq --compact-output <<EOF
           [
-            {"platform": "windows-latest", "python-version": "pypy3.10"},
             {"platform": "windows-latest", "python-version": "pypy3.11"}
           ]
           EOF
